@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAM Label Editor</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-panel: #252526;
+            --bg-header: #333333;
+            --accent: #007acc;
+            --text-main: #cccccc;
+            --text-light: #ffffff;
+            --border: #3e3e42;
+            --danger: #d9534f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-header);
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toolbar-group { display: flex; gap: 10px; align-items: center; }
+        .path-input { background: #111; border: 1px solid var(--border); color: #fff; padding: 6px; width: 220px; border-radius: 4px; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        .stage-area {
+            flex: 2;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-right: 1px solid var(--border);
+        }
+
+        #animationCanvas {
+            border: 1px solid #333;
+            max-width: 90%;
+            max-height: 70%;
+            background: #111;
+        }
+
+        .properties-panel {
+            flex: 1;
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            min-width: 350px;
+        }
+
+        .panel-header { padding: 12px; background: var(--bg-header); font-weight: bold; border-bottom: 1px solid var(--border); }
+
+        .label-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+        .label-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+        .label-item:hover { background: #2d2d30; }
+        .label-item.active { background: #37373d; border-left: 4px solid var(--accent); }
+        .frame-idx { color: var(--accent); font-weight: bold; font-family: monospace; }
+
+        .controls { padding: 15px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; color: white; background: #444; }
+        .btn:hover { background: #555; }
+        .btn-primary { background: var(--accent); }
+        .btn-danger { background: var(--danger); }
+
+        footer { background: var(--accent); color: white; padding: 4px 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="toolbar-group"><strong>PAM Editor</strong></div>
+    <div class="toolbar-group">
+        <input type="text" id="jsonPath" class="path-input" placeholder="Path to pam.json" value="./pecanolith.pam.json">
+        <input type="text" id="mediaPath" class="path-input" placeholder="Media folder/" value="./media/">
+        <button class="btn btn-primary" onclick="loadData()">Load Files</button>
+        <button class="btn" onclick="exportJson()">💾 Save Modified JSON</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="stage-area">
+        <canvas id="animationCanvas"></canvas>
+        <div id="frameInfo" style="margin-top:10px; color:#888;">No frame selected</div>
+    </div>
+
+    <div class="properties-panel">
+        <div class="panel-header">Animation Labels</div>
+        <ul id="labelList" class="label-list"></ul>
+        
+        <div class="controls">
+            <input type="text" id="editName" class="path-input" style="width: auto;" placeholder="Label Name">
+            <div style="display:flex; gap:5px;">
+                <button class="btn" style="flex:1" onclick="renameLabel()">Rename</button>
+                <button class="btn" style="flex:1" onclick="duplicateLabel()">Duplicate</button>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <button class="btn" style="flex:1" onclick="addNewLabel()">+ New at Frame</button>
+                <button class="btn btn-danger" style="flex:1" onclick="deleteLabel()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer id="status">Ready</footer>
+
+<script>
+    let pamData = null;
+    let selectedFrameIndex = -1;
+
+    async function loadData() {
+        const jPath = document.getElementById('jsonPath').value;
+        try {
+            const res = await fetch(jPath);
+            pamData = await res.json();
+            refreshList();
+            document.getElementById('status').innerText = "Loaded " + jPath;
+        } catch (e) {
+            alert("Error loading JSON. Make sure you are using a local server.\n" + e.message);
+        }
+    }
+
+    function refreshList() {
+        const list = document.getElementById('labelList');
+        list.innerHTML = '';
+        if (!pamData || !pamData.main_sprite || !pamData.main_sprite.frame) return;
+
+        pamData.main_sprite.frame.forEach((frame, idx) => {
+            if (frame.label) {
+                const li = document.createElement('li');
+                li.className = 'label-item' + (selectedFrameIndex === idx ? ' active' : '');
+                li.innerHTML = `<span>${frame.label}</span> <span class="frame-idx">F:${idx}</span>`;
+                li.onclick = () => selectLabel(idx, frame.label);
+                list.appendChild(li);
+            }
+        });
+    }
+
+    function selectLabel(idx, name) {
+        selectedFrameIndex = idx;
+        document.getElementById('editName').value = name;
+        document.getElementById('frameInfo').innerText = `Current Frame: ${idx}`;
+        refreshList();
+        drawPreview(idx);
+    }
+
+    function renameLabel() {
+        if (selectedFrameIndex === -1) return;
+        const newName = document.getElementById('editName').value;
+        pamData.main_sprite.frame[selectedFrameIndex].label = newName;
+        refreshList();
+    }
+
+    function duplicateLabel() {
+        if (selectedFrameIndex === -1) return;
+        const targetFrame = prompt("Enter frame number to place duplicate label:");
+        if (targetFrame === null || isNaN(targetFrame)) return;
+        const newName = document.getElementById('editName').value + "_copy";
+        pamData.main_sprite.frame[parseInt(targetFrame)].label = newName;
+        refreshList();
+    }
+
+    function addNewLabel() {
+        const f = prompt("Enter frame number:");
+        const n = prompt("Enter label name:");
+        if (f && n && pamData.main_sprite.frame[f]) {
+            pamData.main_sprite.frame[f].label = n;
+            refreshList();
+        }
+    }
+
+    function deleteLabel() {
+        if (selectedFrameIndex === -1) return;
+        pamData.main_sprite.frame[selectedFrameIndex].label = "";
+        selectedFrameIndex = -1;
+        refreshList();
+    }
+
+    function drawPreview(frameIdx) {
+        const canvas = document.getElementById('animationCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 400; canvas.height = 400;
+        ctx.clearRect(0, 0, 400, 400);
+        
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.font = "20px Arial";
+        ctx.fillText("Frame " + frameIdx, 200, 180);
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "#888";
+        ctx.fillText("Animation Rendering Placeholder", 200, 210);
+    }
+
+    function exportJson() {
+        if (!pamData) return;
+        const blob = new Blob([JSON.stringify(pamData, null, "\t")], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "modified_pecanolith.pam.json";
+        a.click();
+    }
+</script>
+</body>
+</html>
