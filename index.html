@@ -3,335 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAM Editor - Direct Upload</title>
+    <title>PAM Valid Editor V2</title>
     <style>
-        :root {
-            --bg-dark: #121212;
-            --bg-panel: #1e1e1e;
-            --bg-header: #2d2d2d;
-            --accent: #007acc;
-            --text-main: #cccccc;
-            --text-light: #ffffff;
-            --border: #333333;
-            --danger: #d9534f;
-            --success: #4caf50;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Toolbar */
-        header {
-            background-color: var(--bg-header);
-            padding: 8px 15px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .toolbar-group { display: flex; gap: 12px; align-items: center; }
-        
-        /* Styled File Inputs */
-        .file-btn {
-            position: relative;
-            background: #444;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            color: #fff;
-            transition: background 0.2s;
-        }
-        .file-btn:hover { background: #555; }
-        .file-btn input {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0; left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* Layout */
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-
-        .stage-area {
-            flex: 2;
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-right: 1px solid var(--border);
-            position: relative;
-        }
-
-        #animationCanvas {
-            border: 1px solid #222;
-            background-image: radial-gradient(#222 1px, transparent 1px);
-            background-size: 20px 20px;
-            max-width: 95%;
-            max-height: 80%;
-        }
-
-        /* Side Panel */
-        .properties-panel {
-            flex: 1;
-            background-color: var(--bg-panel);
-            display: flex;
-            flex-direction: column;
-            min-width: 380px;
-        }
-
-        .panel-header {
-            padding: 12px;
-            background: #252525;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-light);
-        }
-
-        .label-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
-        .label-item {
-            padding: 10px 15px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .label-item:hover { background: #2a2a2a; }
-        .label-item.active { background: #333333; border-left: 4px solid var(--accent); }
-        .frame-idx { color: var(--accent); font-weight: bold; font-family: 'Courier New', monospace; font-size: 0.8rem; }
-
-        /* Controls */
-        .controls { padding: 15px; background: #252525; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
-        
-        .input-row { display: flex; gap: 8px; }
-        input[type="text"] {
-            flex: 1; background: #111; border: 1px solid var(--border);
-            color: #fff; padding: 8px; border-radius: 4px; outline: none;
-        }
-        input[type="text"]:focus { border-color: var(--accent); }
-
-        .btn { border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; color: white; background: #444; font-size: 0.85rem; }
-        .btn:hover { background: #555; }
-        .btn-primary { background: var(--accent); }
-        .btn-danger { background: var(--danger); }
-        .btn-success { background: var(--success); }
-
-        footer { background: #005a9e; color: white; padding: 4px 15px; font-size: 0.75rem; }
+        :root { --bg: #111; --panel: #222; --accent: #007acc; --text: #ccc; --err: #ff5555; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #333; padding: 10px; border-bottom: 1px solid #444; display: flex; gap: 10px; align-items: center; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .canvas-area { flex: 2; display: flex; flex-direction: column; background: #000; position: relative; }
+        #canvas { border: 1px solid #333; margin: auto; max-width: 90%; max-height: 80%; }
+        .side { flex: 1; background: var(--panel); display: flex; flex-direction: column; border-left: 1px solid #444; min-width: 350px; }
+        .label-list { flex: 1; overflow-y: auto; margin: 0; padding: 0; list-style: none; border-bottom: 1px solid #444; }
+        .label-item { padding: 8px 15px; border-bottom: 1px solid #333; cursor: pointer; display: flex; justify-content: space-between; font-size: 14px; }
+        .label-item:hover { background: #333; }
+        .label-item.active { background: var(--accent); color: white; }
+        .controls { padding: 15px; background: #252525; display: flex; flex-direction: column; gap: 10px; }
+        .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; color: white; background: #444; font-weight: bold; }
+        .btn-save { background: #28a745; }
+        .btn-add { background: var(--accent); }
+        .btn-del { background: #dc3545; }
+        input { background: #000; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; }
+        .debug-log { height: 80px; background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 5px; overflow-y: auto; border-top: 2px solid #444; }
+        .upload-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 12px; font-weight: bold; color: #888; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="toolbar-group">
-        <span style="font-weight: bold; color: var(--accent);">PAM</span> <span>ANIMATE EDITOR</span>
+    <div class="upload-group">
+        <label>1. PAM JSON</label>
+        <input type="file" id="jsonIn" accept=".json">
     </div>
-    <div class="toolbar-group">
-        <div class="file-btn">
-             Choose pam.json
-            <input type="file" id="jsonUpload" accept=".json">
-        </div>
-        <div class="file-btn">
-             Choose Media Folder
-            <input type="file" id="mediaUpload" webkitdirectory directory multiple>
-        </div>
-        <button class="btn btn-success" onclick="exportJson()"> Export JSON</button>
+    <div class="upload-group">
+        <label>2. MEDIA FOLDER</label>
+        <input type="file" id="mediaIn" webkitdirectory directory multiple>
+    </div>
+    <div style="margin-left:auto">
+        <button class="btn btn-save" onclick="exportPAM()">💾 DOWNLOAD VALID PAM</button>
     </div>
 </header>
 
-<div class="main-container">
-    <div class="stage-area">
-        <canvas id="animationCanvas"></canvas>
-        <div id="frameDisplay" style="margin-top:15px; font-family: monospace; color: #666;">
-            Please upload files to begin
-        </div>
+<div class="main">
+    <div class="canvas-area">
+        <canvas id="canvas"></canvas>
+        <div id="frameDisplay" style="text-align:center; padding:10px; color:#666">No File Loaded</div>
     </div>
-
-    <div class="properties-panel">
-        <div class="panel-header">TIMELINE LABELS</div>
-        <ul id="labelList" class="label-list">
-            <li style="padding: 20px; text-align: center; color: #555;">No JSON loaded</li>
-        </ul>
-        
+    <div class="side">
+        <ul id="list" class="label-list"></ul>
         <div class="controls">
-            <div class="input-row">
-                <input type="text" id="editLabelName" placeholder="Label Name">
+            <input type="text" id="nameIn" placeholder="Label Name">
+            <div style="display:flex; gap:5px">
+                <button class="btn" style="flex:1" onclick="rename()">Rename</button>
+                <button class="btn btn-add" style="flex:1" onclick="addNew()">New Label</button>
             </div>
-            <div class="input-row">
-                <button class="btn" style="flex:1" onclick="renameLabel()">Rename</button>
-                <button class="btn" style="flex:1" onclick="duplicateLabel()">Duplicate</button>
-            </div>
-            <div class="input-row">
-                <button class="btn btn-primary" style="flex:1" onclick="addNewLabel()">+ New Label</button>
-                <button class="btn btn-danger" style="flex:1" onclick="deleteLabel()">Delete</button>
-            </div>
+            <button class="btn btn-del" onclick="remove()">Delete Label</button>
         </div>
     </div>
 </div>
 
-<footer id="statusBar">Ready to Import</footer>
+<div id="log" class="debug-log">System Ready...</div>
 
 <script>
-    let pamData = null;
-    let selectedFrameIdx = -1;
-    let mediaFiles = {}; // Maps filenames to Blob URLs
+    let rawData = null;
+    let selectedIdx = -1;
+    const logEl = document.getElementById('log');
 
-    // --- 1. Handle JSON Upload ---
-    document.getElementById('jsonUpload').addEventListener('change', function(e) {
+    function log(msg, isErr = false) {
+        const div = document.createElement('div');
+        div.style.color = isErr ? '#ff5555' : '#0f0';
+        div.innerText = `> ${msg}`;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // --- UPLOAD ---
+    document.getElementById('jsonIn').onchange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = (ev) => {
             try {
-                pamData = JSON.parse(event.target.result);
-                document.getElementById('statusBar').innerText = "Loaded JSON: " + file.name;
-                refreshLabelList();
+                rawData = JSON.parse(ev.target.result);
+                if(!rawData.main_sprite || !rawData.main_sprite.frame) {
+                    throw new Error("Missing 'main_sprite.frame' structure.");
+                }
+                log(`Loaded: ${file.name} (${rawData.main_sprite.frame.length} frames)`);
+                updateList();
             } catch (err) {
-                alert("Invalid JSON file.");
+                log("VALIDATION ERROR: " + err.message, true);
             }
         };
         reader.readAsText(file);
-    });
+    };
 
-    // --- 2. Handle Media Folder Upload ---
-    document.getElementById('mediaUpload').addEventListener('change', function(e) {
-        const files = e.target.files;
-        mediaFiles = {};
-        for (let i = 0; i < files.length; i++) {
-            const f = files[i];
-            // Store by filename so we can find it even if the path in JSON is partial
-            mediaFiles[f.name.toLowerCase()] = URL.createObjectURL(f);
-        }
-        document.getElementById('statusBar').innerText = `Media folder loaded (${files.length} files)`;
-    });
-
-    // --- 3. Label Management ---
-    function refreshLabelList() {
-        const list = document.getElementById('labelList');
+    // --- LOGIC ---
+    function updateList() {
+        const list = document.getElementById('list');
         list.innerHTML = '';
-        
-        if (!pamData || !pamData.main_sprite || !pamData.main_sprite.frame) {
-            list.innerHTML = '<li style="padding:20px; color:red;">Incompatible PAM structure</li>';
-            return;
-        }
-
-        pamData.main_sprite.frame.forEach((frame, idx) => {
-            if (frame.label && frame.label.trim() !== "") {
+        rawData.main_sprite.frame.forEach((f, i) => {
+            if (f.label) {
                 const li = document.createElement('li');
-                li.className = 'label-item' + (selectedFrameIdx === idx ? ' active' : '');
-                li.innerHTML = `
-                    <span>${frame.label}</span>
-                    <span class="frame-idx">FRAME ${idx}</span>
-                `;
-                li.onclick = () => selectFrame(idx, frame.label);
+                li.className = 'label-item' + (selectedIdx === i ? ' active' : '');
+                li.innerHTML = `<span><b>${f.label}</b></span> <span>F:${i}</span>`;
+                li.onclick = () => {
+                    selectedIdx = i;
+                    document.getElementById('nameIn').value = f.label;
+                    document.getElementById('frameDisplay').innerText = `Current Frame: ${i} | Label: ${f.label}`;
+                    updateList();
+                };
                 list.appendChild(li);
             }
         });
     }
 
-    function selectFrame(idx, label) {
-        selectedFrameIdx = idx;
-        document.getElementById('editLabelName').value = label;
-        document.getElementById('frameDisplay').innerText = `Label: ${label} | Frame Index: ${idx}`;
-        refreshLabelList();
-        updatePreview(idx, label);
+    function rename() {
+        if (selectedIdx < 0) return log("Select a label first!", true);
+        const old = rawData.main_sprite.frame[selectedIdx].label;
+        const next = document.getElementById('nameIn').value;
+        rawData.main_sprite.frame[selectedIdx].label = next;
+        log(`Renamed [${old}] to [${next}]`);
+        updateList();
     }
 
-    function renameLabel() {
-        if (selectedFrameIdx === -1) return;
-        const newName = document.getElementById('editLabelName').value.trim();
-        if (newName === "") return;
-        pamData.main_sprite.frame[selectedFrameIdx].label = newName;
-        refreshLabelList();
-    }
-
-    function duplicateLabel() {
-        if (selectedFrameIdx === -1) return;
-        const targetFrame = prompt("At which frame index should this duplicate be placed?", selectedFrameIdx + 1);
-        if (targetFrame === null || isNaN(targetFrame)) return;
-        
-        const frameNum = parseInt(targetFrame);
-        if (frameNum < 0 || frameNum >= pamData.main_sprite.frame.length) {
-            alert("Frame index out of range!");
-            return;
-        }
-
-        pamData.main_sprite.frame[frameNum].label = pamData.main_sprite.frame[selectedFrameIdx].label + "_copy";
-        selectFrame(frameNum, pamData.main_sprite.frame[frameNum].label);
-    }
-
-    function addNewLabel() {
-        if (!pamData) return;
-        const targetFrame = prompt("Enter frame index (0 - " + (pamData.main_sprite.frame.length - 1) + "):", "0");
-        const labelName = prompt("Enter label name (e.g., 'attack'):", "new_label");
-        
-        if (targetFrame !== null && labelName !== null) {
-            const f = parseInt(targetFrame);
-            if (pamData.main_sprite.frame[f]) {
-                pamData.main_sprite.frame[f].label = labelName;
-                refreshLabelList();
-                selectFrame(f, labelName);
-            }
+    function addNew() {
+        if (!rawData) return;
+        const f = prompt("Enter Frame Number (0 to " + (rawData.main_sprite.frame.length-1) + "):");
+        const n = prompt("Enter Label Name:");
+        if (f !== null && n && rawData.main_sprite.frame[f]) {
+            rawData.main_sprite.frame[f].label = n;
+            log(`Added label [${n}] to frame ${f}`);
+            updateList();
+        } else {
+            log("Invalid frame or name", true);
         }
     }
 
-    function deleteLabel() {
-        if (selectedFrameIdx === -1) return;
-        if (confirm("Remove label from frame " + selectedFrameIdx + "?")) {
-            pamData.main_sprite.frame[selectedFrameIdx].label = "";
-            selectedFrameIdx = -1;
-            document.getElementById('editLabelName').value = "";
-            refreshLabelList();
+    function remove() {
+        if (selectedIdx < 0) return;
+        log(`Removed label: ${rawData.main_sprite.frame[selectedIdx].label}`);
+        rawData.main_sprite.frame[selectedIdx].label = "";
+        selectedIdx = -1;
+        updateList();
+    }
+
+    // --- EXPORT ---
+    function exportPAM() {
+        if (!rawData) return log("Nothing to export!", true);
+        try {
+            // Using \t (tabs) to match the PvZ PAM formatting style
+            const blob = new Blob([JSON.stringify(rawData, null, "\t")], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "pecanolith.pam.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            log("Export successful! Valid JSON generated.");
+        } catch (err) {
+            log("EXPORT ERROR: " + err.message, true);
         }
-    }
-
-    // --- 4. Visual Feedback ---
-    function updatePreview(idx, label) {
-        const canvas = document.getElementById('animationCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 500; canvas.height = 400;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Styling for the text placeholder
-        ctx.fillStyle = "#007acc";
-        ctx.font = "bold 24px Segoe UI";
-        ctx.textAlign = "center";
-        ctx.fillText(label.toUpperCase(), canvas.width / 2, 180);
-
-        ctx.fillStyle = "#555";
-        ctx.font = "14px monospace";
-        ctx.fillText(`FRAME ${idx}`, canvas.width / 2, 210);
-        
-        ctx.strokeStyle = "#333";
-        ctx.strokeRect(50, 50, 400, 300);
-    }
-
-    // --- 5. Export ---
-    function exportJson() {
-        if (!pamData) return;
-        const blob = new Blob([JSON.stringify(pamData, null, "\t")], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "modified_pam.json";
-        a.click();
-        URL.revokeObjectURL(url);
     }
 </script>
-
 </body>
 </html>
